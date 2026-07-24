@@ -1,10 +1,13 @@
 import {
+  NodeApiError,
+  NodeConnectionTypes,
   NodeOperationError,
   type IDataObject,
   type IExecuteFunctions,
   type INodeExecutionData,
   type INodeType,
   type INodeTypeDescription,
+  type JsonObject,
 } from 'n8n-workflow';
 
 import { ticketZeroApiRequest, ticketZeroApiRequestAllItems } from './GenericFunctions';
@@ -20,8 +23,8 @@ export class TicketZero implements INodeType {
     description: 'Manage contacts, conversations and messages in TicketZero',
     defaults: { name: 'TicketZero' },
     usableAsTool: true,
-    inputs: ['main'],
-    outputs: ['main'],
+    inputs: [NodeConnectionTypes.Main],
+    outputs: [NodeConnectionTypes.Main],
     credentials: [{ name: 'ticketZeroApi', required: true }],
     properties: [
       // ----------------------------------------------------------------
@@ -991,7 +994,7 @@ export class TicketZero implements INodeType {
           });
           continue;
         }
-        throw error;
+        throw new NodeApiError(this.getNode(), error as JsonObject);
       }
     }
 

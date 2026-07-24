@@ -1,4 +1,5 @@
 import {
+  NodeConnectionTypes,
   type IDataObject,
   type IHookFunctions,
   type INodeType,
@@ -32,7 +33,7 @@ export class TicketZeroTrigger implements INodeType {
     defaults: { name: 'TicketZero Trigger' },
     usableAsTool: true,
     inputs: [],
-    outputs: ['main'],
+    outputs: [NodeConnectionTypes.Main],
     credentials: [{ name: 'ticketZeroApi', required: true }],
     webhooks: [
       {

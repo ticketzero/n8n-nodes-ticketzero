@@ -1,6 +1,8 @@
 import { createHmac } from 'crypto';
 
 import {
+  NodeApiError,
+  NodeConnectionTypes,
   NodeOperationError,
   type IDataObject,
   type IExecuteFunctions,
@@ -8,6 +10,7 @@ import {
   type INodeExecutionData,
   type INodeType,
   type INodeTypeDescription,
+  type JsonObject,
 } from 'n8n-workflow';
 
 /**
@@ -35,8 +38,8 @@ export class TicketZeroAutomation implements INodeType {
     description: 'Triggers a TicketZero automation via its webhook token',
     defaults: { name: 'TicketZero Automation' },
     usableAsTool: true,
-    inputs: ['main'],
-    outputs: ['main'],
+    inputs: [NodeConnectionTypes.Main],
+    outputs: [NodeConnectionTypes.Main],
     properties: [
       {
         displayName: 'Base URL',
@@ -132,7 +135,7 @@ export class TicketZeroAutomation implements INodeType {
           returnData.push({ json: { error: (error as Error).message }, pairedItem: { item: i } });
           continue;
         }
-        throw error;
+        throw new NodeApiError(this.getNode(), error as JsonObject);
       }
     }
 
