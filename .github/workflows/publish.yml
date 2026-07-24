@@ -3,10 +3,11 @@ name: Publish to npm
 # Publishes the package to npm WITH provenance (required by n8n for verified
 # community nodes). Runs when a GitHub Release is published, or manually.
 #
-# Auth: uses npm "trusted publishing" (OIDC) — no NPM_TOKEN needed once the
-# repository + this workflow are registered as a trusted publisher for the
-# package on npmjs.com. (Alternatively, set an NPM_TOKEN secret; it is picked
-# up via NODE_AUTH_TOKEN below.)
+# Auth: npm "trusted publishing" (OIDC). The repository + this workflow are
+# registered as a trusted publisher for the package on npmjs.com, so NO
+# NPM_TOKEN is needed — npm (>= 11.5) exchanges the GitHub OIDC token at
+# publish time. Deliberately no NODE_AUTH_TOKEN: an empty token value would
+# shadow the OIDC login.
 
 on:
   release:
@@ -15,7 +16,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write # required for npm provenance
+  id-token: write # required for OIDC trusted publishing + provenance
 
 jobs:
   publish:
@@ -36,5 +37,3 @@ jobs:
       - run: npm run build
 
       - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
