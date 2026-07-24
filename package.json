@@ -16,7 +16,7 @@
   "author": { "name": "CC Consulting GmbH", "email": "info@ticketzero.de" },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cc-consulting-gmbh-cc/n8n-nodes-ticketzero.git"
+    "url": "git+https://github.com/ticketzero/n8n-nodes-ticketzero.git"
   },
   "engines": { "node": ">=20.15" },
   "main": "index.js",
