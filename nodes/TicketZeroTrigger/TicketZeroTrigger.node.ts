@@ -30,7 +30,7 @@ export class TicketZeroTrigger implements INodeType {
     version: 1,
     subtitle: '={{$parameter["events"].join(", ")}}',
     description:
-      "Start a workflow when something happens in TicketZero — a new contact, a new or reopened conversation, an inbound or outbound message, an assignment, or a status change.",
+      "Start a workflow when something happens in TicketZero: a new contact, a new or reopened conversation, an inbound or outbound message, an assignment, or a status change.",
     defaults: { name: "TicketZero Trigger" },
     usableAsTool: true,
     inputs: [],

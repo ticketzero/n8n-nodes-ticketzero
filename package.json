@@ -1,7 +1,7 @@
 {
   "name": "n8n-nodes-ticketzero",
-  "version": "0.2.3",
-  "description": "n8n community node for TicketZero — GDPR-native customer messaging & helpdesk.",
+  "version": "0.2.4",
+  "description": "n8n community node for TicketZero: GDPR-native customer messaging & helpdesk.",
   "keywords": [
     "n8n-community-node-package",
     "n8n",
