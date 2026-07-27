@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-ticketzero",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "n8n community node for TicketZero — GDPR-native customer messaging & helpdesk.",
   "keywords": [
     "n8n-community-node-package",
@@ -13,12 +13,17 @@
   ],
   "license": "MIT",
   "homepage": "https://ticketzero.de",
-  "author": { "name": "CC Consulting GmbH", "email": "info@ticketzero.de" },
+  "author": {
+    "name": "CC Consulting GmbH",
+    "email": "info@ticketzero.de"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ticketzero/n8n-nodes-ticketzero.git"
   },
-  "engines": { "node": ">=20.15" },
+  "engines": {
+    "node": ">=20.15"
+  },
   "main": "index.js",
   "scripts": {
     "build": "n8n-node build",
@@ -29,17 +34,24 @@
     "test": "node --test",
     "prepublishOnly": "n8n-node prerelease"
   },
-  "files": ["dist", "index.js"],
+  "files": [
+    "dist",
+    "index.js"
+  ],
   "n8n": {
     "n8nNodesApiVersion": 1,
     "strict": true,
-    "credentials": ["dist/credentials/TicketZeroApi.credentials.js"],
+    "credentials": [
+      "dist/credentials/TicketZeroApi.credentials.js"
+    ],
     "nodes": [
       "dist/nodes/TicketZero/TicketZero.node.js",
       "dist/nodes/TicketZeroTrigger/TicketZeroTrigger.node.js"
     ]
   },
-  "peerDependencies": { "n8n-workflow": "*" },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  },
   "devDependencies": {
     "@n8n/node-cli": "^0.23.0",
     "@types/node": "^20.14.0",

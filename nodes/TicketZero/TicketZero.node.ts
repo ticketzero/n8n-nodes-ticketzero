@@ -26,7 +26,8 @@ export class TicketZero implements INodeType {
     group: ["transform"],
     version: 1,
     subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
-    description: "Manage contacts, conversations and messages in TicketZero",
+    description:
+      "Manage contacts, conversations, messages, notes, files and automations in TicketZero — the GDPR-native, all-in-one customer messaging and helpdesk platform.",
     defaults: { name: "TicketZero" },
     usableAsTool: true,
     inputs: [NodeConnectionTypes.Main],

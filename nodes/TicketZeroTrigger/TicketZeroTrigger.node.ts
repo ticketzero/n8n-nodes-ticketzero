@@ -6,10 +6,10 @@ import {
   type INodeTypeDescription,
   type IWebhookFunctions,
   type IWebhookResponseData,
-} from 'n8n-workflow';
+} from "n8n-workflow";
 
-import { ticketZeroApiRequest } from '../TicketZero/GenericFunctions';
-import { verifyTicketZeroSignature } from './verify';
+import { ticketZeroApiRequest } from "../TicketZero/GenericFunctions";
+import { verifyTicketZeroSignature } from "./verify";
 
 /**
  * TicketZero trigger.
@@ -23,64 +23,65 @@ import { verifyTicketZeroSignature } from './verify';
  */
 export class TicketZeroTrigger implements INodeType {
   description: INodeTypeDescription = {
-    displayName: 'TicketZero Trigger',
-    name: 'ticketZeroTrigger',
-    icon: 'file:ticketzero.svg',
-    group: ['trigger'],
+    displayName: "TicketZero Trigger",
+    name: "ticketZeroTrigger",
+    icon: "file:ticketzero.svg",
+    group: ["trigger"],
     version: 1,
     subtitle: '={{$parameter["events"].join(", ")}}',
-    description: 'Starts a workflow on TicketZero events',
-    defaults: { name: 'TicketZero Trigger' },
+    description:
+      "Start a workflow when something happens in TicketZero — a new contact, a new or reopened conversation, an inbound or outbound message, an assignment, or a status change.",
+    defaults: { name: "TicketZero Trigger" },
     usableAsTool: true,
     inputs: [],
     outputs: [NodeConnectionTypes.Main],
-    credentials: [{ name: 'ticketZeroApi', required: true }],
+    credentials: [{ name: "ticketZeroApi", required: true }],
     webhooks: [
       {
-        name: 'default',
-        httpMethod: 'POST',
-        responseMode: 'onReceived',
-        path: 'webhook',
+        name: "default",
+        httpMethod: "POST",
+        responseMode: "onReceived",
+        path: "webhook",
       },
     ],
     properties: [
       {
-        displayName: 'Events',
-        name: 'events',
-        type: 'multiOptions',
+        displayName: "Events",
+        name: "events",
+        type: "multiOptions",
         required: true,
         default: [],
-        description: 'Which TicketZero events to listen for',
+        description: "Which TicketZero events to listen for",
         options: [
           {
-            name: 'Contact Created',
-            value: 'contact.created',
-            description: 'A new contact was created',
+            name: "Contact Created",
+            value: "contact.created",
+            description: "A new contact was created",
           },
           {
-            name: 'Conversation Assigned',
-            value: 'conversation.assigned',
-            description: 'A conversation was assigned to a team member',
+            name: "Conversation Assigned",
+            value: "conversation.assigned",
+            description: "A conversation was assigned to a team member",
           },
           {
-            name: 'Conversation Created',
-            value: 'conversation.created',
-            description: 'A new conversation was created',
+            name: "Conversation Created",
+            value: "conversation.created",
+            description: "A new conversation was created",
           },
           {
-            name: 'Message Received',
-            value: 'message.received',
-            description: 'An inbound customer message arrived',
+            name: "Message Received",
+            value: "message.received",
+            description: "An inbound customer message arrived",
           },
           {
-            name: 'Message Sent',
-            value: 'message.sent',
-            description: 'An outbound message was sent',
+            name: "Message Sent",
+            value: "message.sent",
+            description: "An outbound message was sent",
           },
           {
-            name: 'Status Changed',
-            value: 'conversation.status_changed',
-            description: 'The status of a conversation changed',
+            name: "Status Changed",
+            value: "conversation.status_changed",
+            description: "The status of a conversation changed",
           },
         ],
       },
@@ -90,12 +91,12 @@ export class TicketZeroTrigger implements INodeType {
   webhookMethods = {
     default: {
       async checkExists(this: IHookFunctions): Promise<boolean> {
-        const webhookData = this.getWorkflowStaticData('node');
+        const webhookData = this.getWorkflowStaticData("node");
         if (!webhookData.subscriptionId) return false;
         try {
           await ticketZeroApiRequest.call(
             this,
-            'GET',
+            "GET",
             `/v1/api-public/webhooks/${webhookData.subscriptionId}`,
           );
           return true;
@@ -109,35 +110,35 @@ export class TicketZeroTrigger implements INodeType {
       },
 
       async create(this: IHookFunctions): Promise<boolean> {
-        const webhookUrl = this.getNodeWebhookUrl('default');
+        const webhookUrl = this.getNodeWebhookUrl("default");
         if (!webhookUrl) return false;
-        const events = this.getNodeParameter('events', []) as string[];
-        const workflowName = this.getWorkflow().name ?? 'Workflow';
+        const events = this.getNodeParameter("events", []) as string[];
+        const workflowName = this.getWorkflow().name ?? "Workflow";
         const body: IDataObject = {
           name: `n8n: ${workflowName}`.slice(0, 120),
           url: webhookUrl,
-          events: events.length > 0 ? events : ['*'],
+          events: events.length > 0 ? events : ["*"],
         };
         const response = await ticketZeroApiRequest.call(
           this,
-          'POST',
-          '/v1/api-public/webhooks',
+          "POST",
+          "/v1/api-public/webhooks",
           body,
         );
         if (!response?.id || !response?.secret) return false;
-        const webhookData = this.getWorkflowStaticData('node');
+        const webhookData = this.getWorkflowStaticData("node");
         webhookData.subscriptionId = response.id as string;
         webhookData.secret = response.secret as string;
         return true;
       },
 
       async delete(this: IHookFunctions): Promise<boolean> {
-        const webhookData = this.getWorkflowStaticData('node');
+        const webhookData = this.getWorkflowStaticData("node");
         if (webhookData.subscriptionId) {
           try {
             await ticketZeroApiRequest.call(
               this,
-              'DELETE',
+              "DELETE",
               `/v1/api-public/webhooks/${webhookData.subscriptionId}`,
             );
           } catch {
@@ -154,22 +155,26 @@ export class TicketZeroTrigger implements INodeType {
   async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
     const headers = this.getHeaderData() as IDataObject;
     const bodyData = this.getBodyData() as IDataObject;
-    const webhookData = this.getWorkflowStaticData('node');
+    const webhookData = this.getWorkflowStaticData("node");
     const secret = webhookData.secret as string | undefined;
 
     if (secret) {
       // Verify the signature over the RAW bytes - re-serializing would change
       // the exact byte sequence (key order/whitespace) and break the HMAC.
-      const req = this.getRequestObject() as unknown as { rawBody?: Buffer | string };
+      const req = this.getRequestObject() as unknown as {
+        rawBody?: Buffer | string;
+      };
       const rawBody = req.rawBody;
       if (rawBody === undefined) {
-        return reject.call(this, 'raw_body_unavailable');
+        return reject.call(this, "raw_body_unavailable");
       }
-      const rawString = Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : String(rawBody);
+      const rawString = Buffer.isBuffer(rawBody)
+        ? rawBody.toString("utf8")
+        : String(rawBody);
       const result = verifyTicketZeroSignature({
         secret,
-        signatureHeader: String(headers['x-sg-signature'] ?? ''),
-        timestamp: String(headers['x-sg-timestamp'] ?? ''),
+        signatureHeader: String(headers["x-sg-signature"] ?? ""),
+        timestamp: String(headers["x-sg-timestamp"] ?? ""),
         rawBody: rawString,
         nowSeconds: Math.floor(Date.now() / 1000),
       });
