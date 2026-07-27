@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-ticketzero",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "n8n community node for TicketZero — GDPR-native customer messaging & helpdesk.",
   "keywords": [
     "n8n-community-node-package",
@@ -36,8 +36,7 @@
     "credentials": ["dist/credentials/TicketZeroApi.credentials.js"],
     "nodes": [
       "dist/nodes/TicketZero/TicketZero.node.js",
-      "dist/nodes/TicketZeroTrigger/TicketZeroTrigger.node.js",
-      "dist/nodes/TicketZeroAutomation/TicketZeroAutomation.node.js"
+      "dist/nodes/TicketZeroTrigger/TicketZeroTrigger.node.js"
     ]
   },
   "peerDependencies": { "n8n-workflow": "*" },
