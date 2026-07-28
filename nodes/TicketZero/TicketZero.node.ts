@@ -1193,38 +1193,26 @@ export class TicketZero implements INodeType {
         filter?: string,
       ): Promise<INodeListSearchResult> {
         const trimmed = (filter ?? "").trim();
-        let data: IDataObject[];
-        if (trimmed !== "" && trimmed.includes("@")) {
-          const resp = await ticketZeroApiRequest.call(
-            this,
-            "GET",
-            "/v1/api-public/contacts",
-            {},
-            { email: trimmed },
-          );
-          data = (resp?.data as IDataObject[]) ?? [];
+        // Server-seitig suchen statt nur Seite 1 lokal zu filtern: bei einem
+        // Freitext ueber ?q= (durchsucht Name/E-Mail/Telefon ueber ALLE Kontakte),
+        // bei einer E-Mail per exaktem blind-index (?email=), ohne Filter die
+        // erste Seite, damit das Dropdown beim Oeffnen etwas zeigt.
+        let qs: IDataObject;
+        if (trimmed === "") {
+          qs = { limit: 50 };
+        } else if (trimmed.includes("@")) {
+          qs = { email: trimmed };
         } else {
-          const resp = await ticketZeroApiRequest.call(
-            this,
-            "GET",
-            "/v1/api-public/contacts",
-            {},
-            { limit: 50 },
-          );
-          data = (resp?.data as IDataObject[]) ?? [];
-          if (trimmed !== "") {
-            const needle = trimmed.toLowerCase();
-            data = data.filter(
-              (c) =>
-                String(c.name ?? "")
-                  .toLowerCase()
-                  .includes(needle) ||
-                String(c.email ?? "")
-                  .toLowerCase()
-                  .includes(needle),
-            );
-          }
+          qs = { q: trimmed, limit: 50 };
         }
+        const resp = await ticketZeroApiRequest.call(
+          this,
+          "GET",
+          "/v1/api-public/contacts",
+          {},
+          qs,
+        );
+        const data = (resp?.data as IDataObject[]) ?? [];
         const results = data.map((c) => {
           const label =
             String(c.name ?? "").trim() || String(c.email ?? "") || String(c.id);
