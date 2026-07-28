@@ -7,7 +7,10 @@ import {
   type IDataObject,
   type IExecuteFunctions,
   type IHttpRequestOptions,
+  type ILoadOptionsFunctions,
   type INodeExecutionData,
+  type INodeListSearchResult,
+  type INodePropertyOptions,
   type INodeType,
   type INodeTypeDescription,
   type JsonObject,
@@ -441,6 +444,40 @@ export class TicketZero implements INodeType {
       },
 
       // ----------------------------------------------------------------
+      // Fields: Contact standard fields (create / update)
+      // ----------------------------------------------------------------
+      {
+        displayName: "Name",
+        name: "name",
+        type: "string",
+        default: "",
+        displayOptions: {
+          show: { resource: ["contact"], operation: ["create", "update"] },
+        },
+      },
+      {
+        displayName: "Email",
+        name: "email",
+        type: "string",
+        placeholder: "name@example.com",
+        default: "",
+        displayOptions: {
+          show: { resource: ["contact"], operation: ["create", "update"] },
+        },
+      },
+      {
+        displayName: "Phone (E.164)",
+        name: "phone",
+        type: "string",
+        placeholder: "+491701234567",
+        default: "",
+        displayOptions: {
+          show: { resource: ["contact"], operation: ["create", "update"] },
+        },
+        description: "Must be in E.164 format, e.g. +491701234567",
+      },
+
+      // ----------------------------------------------------------------
       // Fields: Create contact
       // ----------------------------------------------------------------
       {
@@ -463,28 +500,12 @@ export class TicketZero implements INodeType {
             description: "Freely definable attributes as a JSON object",
           },
           {
-            displayName: "Email",
-            name: "email",
-            type: "string",
-            placeholder: "name@example.com",
-            default: "",
-          },
-          {
             displayName: "External ID",
             name: "external_id",
             type: "string",
             default: "",
             description:
               "Your own contact ID (for dedup / matching with your CRM)",
-          },
-          { displayName: "Name", name: "name", type: "string", default: "" },
-          {
-            displayName: "Phone (E.164)",
-            name: "phone",
-            type: "string",
-            placeholder: "+491701234567",
-            default: "",
-            description: "Must be in E.164 format, e.g. +491701234567",
           },
         ],
       },
@@ -493,17 +514,35 @@ export class TicketZero implements INodeType {
       // Fields: Get contact
       // ----------------------------------------------------------------
       {
-        displayName: "Contact ID",
+        displayName: "Contact",
         name: "contactId",
-        type: "string",
+        type: "resourceLocator",
+        default: { mode: "list", value: "" },
         required: true,
-        default: "",
         displayOptions: {
           show: {
             resource: ["contact"],
             operation: ["get", "update", "delete"],
           },
         },
+        modes: [
+          {
+            displayName: "From list",
+            name: "list",
+            type: "list",
+            placeholder: "Select a contact...",
+            typeOptions: {
+              searchListMethod: "searchContacts",
+              searchable: true,
+            },
+          },
+          {
+            displayName: "By ID",
+            name: "id",
+            type: "string",
+            placeholder: "e.g. ct_1234567890",
+          },
+        ],
       },
 
       // ----------------------------------------------------------------
@@ -538,21 +577,6 @@ export class TicketZero implements INodeType {
             ],
             default: "opted_in",
           },
-          {
-            displayName: "Email",
-            name: "email",
-            type: "string",
-            placeholder: "name@example.com",
-            default: "",
-          },
-          { displayName: "Name", name: "name", type: "string", default: "" },
-          {
-            displayName: "Phone (E.164)",
-            name: "phone",
-            type: "string",
-            placeholder: "+491701234567",
-            default: "",
-          },
         ],
       },
 
@@ -560,11 +584,14 @@ export class TicketZero implements INodeType {
       // Fields: Contact list (add / remove member)
       // ----------------------------------------------------------------
       {
-        displayName: "List ID",
+        displayName: "List Name or ID",
         name: "listId",
-        type: "string",
+        type: "options",
         required: true,
         default: "",
+        typeOptions: { loadOptionsMethod: "getContactLists" },
+        description:
+          'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
         displayOptions: {
           show: {
             resource: ["contactList"],
@@ -573,17 +600,35 @@ export class TicketZero implements INodeType {
         },
       },
       {
-        displayName: "Contact ID",
+        displayName: "Contact",
         name: "memberContactId",
-        type: "string",
+        type: "resourceLocator",
+        default: { mode: "list", value: "" },
         required: true,
-        default: "",
         displayOptions: {
           show: {
             resource: ["contactList"],
             operation: ["addMember", "removeMember"],
           },
         },
+        modes: [
+          {
+            displayName: "From list",
+            name: "list",
+            type: "list",
+            placeholder: "Select a contact...",
+            typeOptions: {
+              searchListMethod: "searchContacts",
+              searchable: true,
+            },
+          },
+          {
+            displayName: "By ID",
+            name: "id",
+            type: "string",
+            placeholder: "e.g. ct_1234567890",
+          },
+        ],
       },
 
       // ----------------------------------------------------------------
@@ -641,11 +686,11 @@ export class TicketZero implements INodeType {
       // Fields: Get conversation
       // ----------------------------------------------------------------
       {
-        displayName: "Conversation ID",
+        displayName: "Conversation",
         name: "conversationId",
-        type: "string",
+        type: "resourceLocator",
+        default: { mode: "list", value: "" },
         required: true,
-        default: "",
         displayOptions: {
           show: {
             resource: ["conversation"],
@@ -659,16 +704,52 @@ export class TicketZero implements INodeType {
             ],
           },
         },
+        modes: [
+          {
+            displayName: "From list",
+            name: "list",
+            type: "list",
+            placeholder: "Select a conversation...",
+            typeOptions: {
+              searchListMethod: "searchConversations",
+              searchable: true,
+            },
+          },
+          {
+            displayName: "By ID",
+            name: "id",
+            type: "string",
+            placeholder: "e.g. cv_1234567890",
+          },
+        ],
       },
       {
-        displayName: "Conversation ID",
+        displayName: "Conversation",
         name: "conversationId",
-        type: "string",
+        type: "resourceLocator",
+        default: { mode: "list", value: "" },
         required: true,
-        default: "",
         displayOptions: {
           show: { resource: ["message"], operation: ["send", "sendEmail"] },
         },
+        modes: [
+          {
+            displayName: "From list",
+            name: "list",
+            type: "list",
+            placeholder: "Select a conversation...",
+            typeOptions: {
+              searchListMethod: "searchConversations",
+              searchable: true,
+            },
+          },
+          {
+            displayName: "By ID",
+            name: "id",
+            type: "string",
+            placeholder: "e.g. cv_1234567890",
+          },
+        ],
       },
 
       // ----------------------------------------------------------------
@@ -711,12 +792,30 @@ export class TicketZero implements INodeType {
         },
         options: [
           {
-            displayName: "Contact ID",
+            displayName: "Contact",
             name: "contact_id",
-            type: "string",
-            default: "",
+            type: "resourceLocator",
+            default: { mode: "list", value: "" },
             description:
               "Only conversations of this contact (get many conversations of a contact)",
+            modes: [
+              {
+                displayName: "From list",
+                name: "list",
+                type: "list",
+                placeholder: "Select a contact...",
+                typeOptions: {
+                  searchListMethod: "searchContacts",
+                  searchable: true,
+                },
+              },
+              {
+                displayName: "By ID",
+                name: "id",
+                type: "string",
+                placeholder: "e.g. ct_1234567890",
+              },
+            ],
           },
           {
             displayName: "Inbox ID",
@@ -794,12 +893,30 @@ export class TicketZero implements INodeType {
       // Fields: Note (resource)
       // ----------------------------------------------------------------
       {
-        displayName: "Conversation ID",
+        displayName: "Conversation",
         name: "noteConversationId",
-        type: "string",
+        type: "resourceLocator",
+        default: { mode: "list", value: "" },
         required: true,
-        default: "",
         displayOptions: { show: { resource: ["note"] } },
+        modes: [
+          {
+            displayName: "From list",
+            name: "list",
+            type: "list",
+            placeholder: "Select a conversation...",
+            typeOptions: {
+              searchListMethod: "searchConversations",
+              searchable: true,
+            },
+          },
+          {
+            displayName: "By ID",
+            name: "id",
+            type: "string",
+            placeholder: "e.g. cv_1234567890",
+          },
+        ],
       },
       {
         displayName: "Note",
@@ -859,6 +976,99 @@ export class TicketZero implements INodeType {
     ],
   };
 
+  methods = {
+    loadOptions: {
+      async getContactLists(
+        this: ILoadOptionsFunctions,
+      ): Promise<INodePropertyOptions[]> {
+        const resp = await ticketZeroApiRequest.call(
+          this,
+          "GET",
+          "/v1/api-public/contact-lists",
+        );
+        const data = (resp?.data as IDataObject[]) ?? [];
+        return data.map((l) => ({
+          name: String(l.name ?? l.id),
+          value: String(l.id),
+        }));
+      },
+    },
+    listSearch: {
+      async searchConversations(
+        this: ILoadOptionsFunctions,
+        filter?: string,
+      ): Promise<INodeListSearchResult> {
+        const resp = await ticketZeroApiRequest.call(
+          this,
+          "GET",
+          "/v1/api-public/conversations",
+          {},
+          { limit: 50 },
+        );
+        const data = (resp?.data as IDataObject[]) ?? [];
+        let results = data.map((c) => {
+          const subject = String(c.subject ?? "").trim();
+          const label =
+            subject ||
+            [
+              String(c.channel ?? "Chat"),
+              new Date(String(c.created_at)).toLocaleString(),
+            ].join(" · ");
+          return { name: label, value: String(c.id) };
+        });
+        if (filter && filter.trim() !== "") {
+          const needle = filter.toLowerCase();
+          results = results.filter((r) => r.name.toLowerCase().includes(needle));
+        }
+        return { results };
+      },
+      async searchContacts(
+        this: ILoadOptionsFunctions,
+        filter?: string,
+      ): Promise<INodeListSearchResult> {
+        const trimmed = (filter ?? "").trim();
+        let data: IDataObject[];
+        if (trimmed !== "" && trimmed.includes("@")) {
+          const resp = await ticketZeroApiRequest.call(
+            this,
+            "GET",
+            "/v1/api-public/contacts",
+            {},
+            { email: trimmed },
+          );
+          data = (resp?.data as IDataObject[]) ?? [];
+        } else {
+          const resp = await ticketZeroApiRequest.call(
+            this,
+            "GET",
+            "/v1/api-public/contacts",
+            {},
+            { limit: 50 },
+          );
+          data = (resp?.data as IDataObject[]) ?? [];
+          if (trimmed !== "") {
+            const needle = trimmed.toLowerCase();
+            data = data.filter(
+              (c) =>
+                String(c.name ?? "")
+                  .toLowerCase()
+                  .includes(needle) ||
+                String(c.email ?? "")
+                  .toLowerCase()
+                  .includes(needle),
+            );
+          }
+        }
+        const results = data.map((c) => {
+          const label =
+            String(c.name ?? "").trim() || String(c.email ?? "") || String(c.id);
+          return { name: label, value: String(c.id) };
+        });
+        return { results };
+      },
+    },
+  };
+
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
     const items = this.getInputData();
     const returnData: INodeExecutionData[] = [];
@@ -877,15 +1087,14 @@ export class TicketZero implements INodeType {
               {},
             ) as IDataObject;
             const body: IDataObject = {};
-            for (const key of [
-              "name",
-              "email",
-              "phone",
-              "external_id",
-            ] as const) {
-              const value = fields[key];
+            for (const key of ["name", "email", "phone"] as const) {
+              const value = this.getNodeParameter(key, i, "") as string;
               if (typeof value === "string" && value.trim() !== "")
                 body[key] = value.trim();
+            }
+            const externalId = fields.external_id;
+            if (typeof externalId === "string" && externalId.trim() !== "") {
+              body.external_id = externalId.trim();
             }
             if (fields.attributes !== undefined && fields.attributes !== "") {
               body.attributes = parseJsonParam.call(
@@ -902,7 +1111,9 @@ export class TicketZero implements INodeType {
               body,
             );
           } else if (operation === "get") {
-            const contactId = this.getNodeParameter("contactId", i) as string;
+            const contactId = this.getNodeParameter("contactId", i, "", {
+              extractValue: true,
+            }) as string;
             responseData = await ticketZeroApiRequest.call(
               this,
               "GET",
@@ -941,22 +1152,26 @@ export class TicketZero implements INodeType {
               responseData = (resp?.data as IDataObject[]) ?? [];
             }
           } else if (operation === "update") {
-            const contactId = this.getNodeParameter("contactId", i) as string;
+            const contactId = this.getNodeParameter("contactId", i, "", {
+              extractValue: true,
+            }) as string;
             const fields = this.getNodeParameter(
               "contactUpdateFields",
               i,
               {},
             ) as IDataObject;
             const body: IDataObject = {};
-            for (const key of [
-              "name",
-              "email",
-              "phone",
-              "consent_status",
-            ] as const) {
-              const value = fields[key];
+            for (const key of ["name", "email", "phone"] as const) {
+              const value = this.getNodeParameter(key, i, "") as string;
               if (typeof value === "string" && value.trim() !== "")
                 body[key] = value.trim();
+            }
+            const consentStatus = fields.consent_status;
+            if (
+              typeof consentStatus === "string" &&
+              consentStatus.trim() !== ""
+            ) {
+              body.consent_status = consentStatus.trim();
             }
             if (fields.attributes !== undefined && fields.attributes !== "") {
               body.attributes = parseJsonParam.call(
@@ -973,7 +1188,9 @@ export class TicketZero implements INodeType {
               body,
             );
           } else if (operation === "delete") {
-            const contactId = this.getNodeParameter("contactId", i) as string;
+            const contactId = this.getNodeParameter("contactId", i, "", {
+              extractValue: true,
+            }) as string;
             responseData = await ticketZeroApiRequest.call(
               this,
               "DELETE",
@@ -993,6 +1210,8 @@ export class TicketZero implements INodeType {
             const memberContactId = this.getNodeParameter(
               "memberContactId",
               i,
+              "",
+              { extractValue: true },
             ) as string;
             responseData = await ticketZeroApiRequest.call(
               this,
@@ -1005,6 +1224,8 @@ export class TicketZero implements INodeType {
             const memberContactId = this.getNodeParameter(
               "memberContactId",
               i,
+              "",
+              { extractValue: true },
             ) as string;
             responseData = await ticketZeroApiRequest.call(
               this,
@@ -1018,7 +1239,9 @@ export class TicketZero implements INodeType {
           const conversationId =
             operation === "getAll"
               ? ""
-              : (this.getNodeParameter("conversationId", i) as string);
+              : (this.getNodeParameter("conversationId", i, "", {
+                  extractValue: true,
+                }) as string);
           const convPath = `/v1/api-public/conversations/${encodeURIComponent(conversationId)}`;
 
           if (operation === "get") {
@@ -1042,11 +1265,9 @@ export class TicketZero implements INodeType {
             ) {
               qs.inbox_id = filters.inbox_id.trim();
             }
-            if (
-              typeof filters.contact_id === "string" &&
-              filters.contact_id.trim() !== ""
-            ) {
-              qs.contact_id = filters.contact_id.trim();
+            const contactIdFilter = rlValue(filters.contact_id).trim();
+            if (contactIdFilter !== "") {
+              qs.contact_id = contactIdFilter;
             }
             if (returnAll) {
               responseData = await ticketZeroApiRequestAllItems.call(
@@ -1117,6 +1338,8 @@ export class TicketZero implements INodeType {
           const noteConversationId = this.getNodeParameter(
             "noteConversationId",
             i,
+            "",
+            { extractValue: true },
           ) as string;
           const notesBase = `/v1/api-public/conversations/${encodeURIComponent(
             noteConversationId,
@@ -1159,6 +1382,8 @@ export class TicketZero implements INodeType {
             const conversationId = this.getNodeParameter(
               "conversationId",
               i,
+              "",
+              { extractValue: true },
             ) as string;
             const messageBody = this.getNodeParameter(
               "messageBody",
@@ -1174,6 +1399,8 @@ export class TicketZero implements INodeType {
             const conversationId = this.getNodeParameter(
               "conversationId",
               i,
+              "",
+              { extractValue: true },
             ) as string;
             const emailBody = this.getNodeParameter("emailBody", i) as string;
             const subject = (
@@ -1374,6 +1601,19 @@ async function triggerAutomation(
   } catch {
     return { response: String(response) };
   }
+}
+
+/**
+ * Reads the string value out of a resourceLocator parameter value.
+ * When the value is an object (`{ mode, value }`) it returns `.value`,
+ * otherwise it coerces the raw value to a string.
+ */
+function rlValue(v: unknown): string {
+  if (v && typeof v === "object") {
+    const val = (v as IDataObject).value;
+    return typeof val === "string" ? val : String(val ?? "");
+  }
+  return String(v ?? "");
 }
 
 /** Parses a JSON string/object parameter or throws a clear node error. */
