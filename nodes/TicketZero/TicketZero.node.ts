@@ -365,14 +365,32 @@ export class TicketZero implements INodeType {
       // Fields: File
       // ----------------------------------------------------------------
       {
-        displayName: "File ID",
+        displayName: "File",
         name: "fileId",
-        type: "string",
+        type: "resourceLocator",
+        default: { mode: "list", value: "" },
         required: true,
-        default: "",
         displayOptions: {
           show: { resource: ["file"], operation: ["download", "delete"] },
         },
+        modes: [
+          {
+            displayName: "From list",
+            name: "list",
+            type: "list",
+            placeholder: "Select a file...",
+            typeOptions: {
+              searchListMethod: "searchFiles",
+              searchable: true,
+            },
+          },
+          {
+            displayName: "By ID",
+            name: "id",
+            type: "string",
+            placeholder: "e.g. fl_1234567890",
+          },
+        ],
       },
       {
         displayName: "Input Binary Field",
@@ -400,20 +418,25 @@ export class TicketZero implements INodeType {
             description: "Display name (otherwise taken from the binary data)",
           },
           {
-            displayName: "Folder ID",
+            displayName: "Folder Name or ID",
             name: "folder_id",
-            type: "string",
+            type: "options",
             default: "",
+            typeOptions: { loadOptionsMethod: "getFolders" },
+            description:
+              'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
           },
         ],
       },
       {
-        displayName: "Folder ID",
+        displayName: "Folder Name or ID",
         name: "fileFolderId",
-        type: "string",
+        type: "options",
         default: "",
+        typeOptions: { loadOptionsMethod: "getFolders" },
         displayOptions: { show: { resource: ["file"], operation: ["getAll"] } },
-        description: "Only contents of this folder (empty = root)",
+        description:
+          'Only contents of this folder (empty = root). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
       },
 
       // ----------------------------------------------------------------
@@ -476,6 +499,52 @@ export class TicketZero implements INodeType {
         },
         description: "Must be in E.164 format, e.g. +491701234567",
       },
+      {
+        displayName: "Attributes",
+        name: "attributesUi",
+        type: "fixedCollection",
+        placeholder: "Add Attribute",
+        default: {},
+        typeOptions: { multipleValues: true },
+        displayOptions: {
+          show: { resource: ["contact"], operation: ["create", "update"] },
+        },
+        description: "Custom attributes defined in your workspace",
+        options: [
+          {
+            displayName: "Attribute",
+            name: "attribute",
+            values: [
+              {
+                displayName: "Attribute Name or ID",
+                name: "attribute",
+                type: "options",
+                default: "",
+                typeOptions: { loadOptionsMethod: "getContactAttributes" },
+                description:
+                  'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+              },
+              {
+                displayName: "Value",
+                name: "value",
+                type: "string",
+                default: "",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        displayName: "Attributes (JSON)",
+        name: "attributesJson",
+        type: "json",
+        default: "{}",
+        displayOptions: {
+          show: { resource: ["contact"], operation: ["create", "update"] },
+        },
+        description:
+          "Advanced: ad-hoc attributes as a JSON object for keys not in the attribute definitions. A value of null removes the attribute. UI attributes above win on conflict.",
+      },
 
       // ----------------------------------------------------------------
       // Fields: Create contact
@@ -492,13 +561,6 @@ export class TicketZero implements INodeType {
         description:
           "At least one of name/email/phone/external ID should be set",
         options: [
-          {
-            displayName: "Attributes (JSON)",
-            name: "attributes",
-            type: "json",
-            default: "{}",
-            description: "Freely definable attributes as a JSON object",
-          },
           {
             displayName: "External ID",
             name: "external_id",
@@ -558,14 +620,6 @@ export class TicketZero implements INodeType {
           show: { resource: ["contact"], operation: ["update"] },
         },
         options: [
-          {
-            displayName: "Attributes (JSON)",
-            name: "attributes",
-            type: "json",
-            default: "{}",
-            description:
-              "Custom attributes as a JSON object. A value of `null` removes the attribute.",
-          },
           {
             displayName: "Consent Status",
             name: "consent_status",
@@ -818,10 +872,13 @@ export class TicketZero implements INodeType {
             ],
           },
           {
-            displayName: "Inbox ID",
+            displayName: "Inbox Name or ID",
             name: "inbox_id",
-            type: "string",
+            type: "options",
             default: "",
+            typeOptions: { loadOptionsMethod: "getInboxes" },
+            description:
+              'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
           },
           {
             displayName: "Status",
@@ -860,33 +917,36 @@ export class TicketZero implements INodeType {
       // Fields: Assign
       // ----------------------------------------------------------------
       {
-        displayName: "Assignee User ID",
+        displayName: "Assignee Name or ID",
         name: "assigneeUserId",
-        type: "string",
+        type: "options",
         default: "",
+        typeOptions: { loadOptionsMethod: "getMembers" },
         displayOptions: {
           show: { resource: ["conversation"], operation: ["assign"] },
         },
         description:
-          "User ID of the team member. Leave empty to remove the assignment.",
+          'Leave empty to remove the assignment. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
       },
 
       // ----------------------------------------------------------------
       // Fields: Add / remove tag
       // ----------------------------------------------------------------
       {
-        displayName: "Tag",
+        displayName: "Tag Name or ID",
         name: "tag",
-        type: "string",
+        type: "options",
         required: true,
         default: "",
+        typeOptions: { loadOptionsMethod: "getTags" },
         displayOptions: {
           show: {
             resource: ["conversation"],
             operation: ["addTag", "removeTag"],
           },
         },
-        description: "Only letters, digits, _ and - (will be lowercased)",
+        description:
+          'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
       },
 
       // ----------------------------------------------------------------
@@ -928,11 +988,17 @@ export class TicketZero implements INodeType {
         displayOptions: { show: { resource: ["note"], operation: ["add"] } },
       },
       {
-        displayName: "Note ID",
+        displayName: "Note Name or ID",
         name: "noteId",
-        type: "string",
+        type: "options",
         required: true,
         default: "",
+        typeOptions: {
+          loadOptionsMethod: "getNotes",
+          loadOptionsDependsOn: ["noteConversationId"],
+        },
+        description:
+          'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
         displayOptions: { show: { resource: ["note"], operation: ["delete"] } },
       },
 
@@ -990,6 +1056,106 @@ export class TicketZero implements INodeType {
         return data.map((l) => ({
           name: String(l.name ?? l.id),
           value: String(l.id),
+        }));
+      },
+      async getTags(
+        this: ILoadOptionsFunctions,
+      ): Promise<INodePropertyOptions[]> {
+        const resp = await ticketZeroApiRequest.call(
+          this,
+          "GET",
+          "/v1/api-public/tags",
+        );
+        const data = (resp?.data as IDataObject[]) ?? [];
+        return data.map((t) => ({
+          name: String(t.label ?? t.name),
+          value: String(t.name),
+        }));
+      },
+      async getMembers(
+        this: ILoadOptionsFunctions,
+      ): Promise<INodePropertyOptions[]> {
+        const resp = await ticketZeroApiRequest.call(
+          this,
+          "GET",
+          "/v1/api-public/members",
+        );
+        const data = (resp?.data as IDataObject[]) ?? [];
+        return [
+          { name: "None (Unassign)", value: "" },
+          ...data.map((m) => ({
+            name: m.email
+              ? `${String(m.display_name)} (${String(m.email)})`
+              : String(m.display_name ?? m.user_id),
+            value: String(m.user_id),
+          })),
+        ];
+      },
+      async getInboxes(
+        this: ILoadOptionsFunctions,
+      ): Promise<INodePropertyOptions[]> {
+        const resp = await ticketZeroApiRequest.call(
+          this,
+          "GET",
+          "/v1/api-public/inboxes",
+        );
+        const data = (resp?.data as IDataObject[]) ?? [];
+        return data.map((x) => ({
+          name: x.is_default ? `${String(x.name)} (Standard)` : String(x.name),
+          value: String(x.id),
+        }));
+      },
+      async getContactAttributes(
+        this: ILoadOptionsFunctions,
+      ): Promise<INodePropertyOptions[]> {
+        const resp = await ticketZeroApiRequest.call(
+          this,
+          "GET",
+          "/v1/api-public/contact-attribute-definitions",
+        );
+        const data = (resp?.data as IDataObject[]) ?? [];
+        return data.map((a) => ({
+          name: String(a.label ?? a.key),
+          value: String(a.key),
+        }));
+      },
+      async getFolders(
+        this: ILoadOptionsFunctions,
+      ): Promise<INodePropertyOptions[]> {
+        const resp = await ticketZeroApiRequest.call(
+          this,
+          "GET",
+          "/v1/api-public/files",
+        );
+        const folders = (resp?.folders as IDataObject[]) ?? [];
+        return [
+          { name: "(Root)", value: "" },
+          ...folders.map((f) => ({
+            name: String(f.name ?? f.id),
+            value: String(f.id),
+          })),
+        ];
+      },
+      async getNotes(
+        this: ILoadOptionsFunctions,
+      ): Promise<INodePropertyOptions[]> {
+        const conversationId = String(
+          this.getCurrentNodeParameter("noteConversationId", {
+            extractValue: true,
+          }) ?? "",
+        ).trim();
+        if (conversationId === "") return [];
+        const resp = await ticketZeroApiRequest.call(
+          this,
+          "GET",
+          `/v1/api-public/conversations/${encodeURIComponent(
+            conversationId,
+          )}/notes`,
+        );
+        const data = (resp?.data as IDataObject[]) ?? [];
+        return data.map((n) => ({
+          name: String(n.body ?? "").slice(0, 60) || String(n.id),
+          value: String(n.id),
         }));
       },
     },
@@ -1066,6 +1232,26 @@ export class TicketZero implements INodeType {
         });
         return { results };
       },
+      async searchFiles(
+        this: ILoadOptionsFunctions,
+        filter?: string,
+      ): Promise<INodeListSearchResult> {
+        const resp = await ticketZeroApiRequest.call(
+          this,
+          "GET",
+          "/v1/api-public/files",
+        );
+        const files = (resp?.files as IDataObject[]) ?? [];
+        let results = files.map((f) => ({
+          name: String(f.name ?? f.id),
+          value: String(f.id),
+        }));
+        if (filter && filter.trim() !== "") {
+          const needle = filter.toLowerCase();
+          results = results.filter((r) => r.name.toLowerCase().includes(needle));
+        }
+        return { results };
+      },
     },
   };
 
@@ -1096,13 +1282,9 @@ export class TicketZero implements INodeType {
             if (typeof externalId === "string" && externalId.trim() !== "") {
               body.external_id = externalId.trim();
             }
-            if (fields.attributes !== undefined && fields.attributes !== "") {
-              body.attributes = parseJsonParam.call(
-                this,
-                fields.attributes,
-                "Attributes",
-                i,
-              );
+            const createAttributes = buildContactAttributes.call(this, i);
+            if (createAttributes !== undefined) {
+              body.attributes = createAttributes;
             }
             responseData = await ticketZeroApiRequest.call(
               this,
@@ -1173,13 +1355,9 @@ export class TicketZero implements INodeType {
             ) {
               body.consent_status = consentStatus.trim();
             }
-            if (fields.attributes !== undefined && fields.attributes !== "") {
-              body.attributes = parseJsonParam.call(
-                this,
-                fields.attributes,
-                "Attributes",
-                i,
-              );
+            const updateAttributes = buildContactAttributes.call(this, i);
+            if (updateAttributes !== undefined) {
+              body.attributes = updateAttributes;
             }
             responseData = await ticketZeroApiRequest.call(
               this,
@@ -1433,14 +1611,18 @@ export class TicketZero implements INodeType {
               qs,
             );
           } else if (operation === "download") {
-            const fileId = this.getNodeParameter("fileId", i) as string;
+            const fileId = this.getNodeParameter("fileId", i, "", {
+              extractValue: true,
+            }) as string;
             responseData = await ticketZeroApiRequest.call(
               this,
               "GET",
               `/v1/api-public/files/${encodeURIComponent(fileId)}/download`,
             );
           } else if (operation === "delete") {
-            const fileId = this.getNodeParameter("fileId", i) as string;
+            const fileId = this.getNodeParameter("fileId", i, "", {
+              extractValue: true,
+            }) as string;
             responseData = await ticketZeroApiRequest.call(
               this,
               "DELETE",
@@ -1631,4 +1813,45 @@ function parseJsonParam(
       itemIndex,
     });
   }
+}
+
+/**
+ * Builds the contact `attributes` object from the `attributesUi` fixedCollection
+ * and the advanced `attributesJson` field. UI key/value pairs win on conflict.
+ * Returns `undefined` when no attributes were provided.
+ */
+function buildContactAttributes(
+  this: IExecuteFunctions,
+  itemIndex: number,
+): IDataObject | undefined {
+  const result: IDataObject = {};
+
+  const jsonRaw = this.getNodeParameter(
+    "attributesJson",
+    itemIndex,
+    "",
+  ) as unknown;
+  if (jsonRaw !== undefined && jsonRaw !== "" && jsonRaw !== "{}") {
+    const parsed = parseJsonParam.call(
+      this,
+      jsonRaw,
+      "Attributes (JSON)",
+      itemIndex,
+    );
+    Object.assign(result, parsed);
+  }
+
+  const ui = this.getNodeParameter(
+    "attributesUi",
+    itemIndex,
+    {},
+  ) as IDataObject;
+  const pairs = (ui.attribute as IDataObject[]) ?? [];
+  for (const pair of pairs) {
+    const key = typeof pair.attribute === "string" ? pair.attribute.trim() : "";
+    if (key === "") continue;
+    result[key] = pair.value ?? "";
+  }
+
+  return Object.keys(result).length > 0 ? result : undefined;
 }
