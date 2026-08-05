@@ -1193,10 +1193,10 @@ export class TicketZero implements INodeType {
         filter?: string,
       ): Promise<INodeListSearchResult> {
         const trimmed = (filter ?? "").trim();
-        // Server-seitig suchen statt nur Seite 1 lokal zu filtern: bei einem
-        // Freitext ueber ?q= (durchsucht Name/E-Mail/Telefon ueber ALLE Kontakte),
-        // bei einer E-Mail per exaktem blind-index (?email=), ohne Filter die
-        // erste Seite, damit das Dropdown beim Oeffnen etwas zeigt.
+        // Server-side search instead of local filtering: free-text uses ?q=
+        // (searches name/email/phone across ALL contacts), an email address uses
+        // exact blind-index matching (?email=), and no filter fetches the first
+        // page so the dropdown shows something on open.
         let qs: IDataObject;
         if (trimmed === "") {
           qs = { limit: 50 };
